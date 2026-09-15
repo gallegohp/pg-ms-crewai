@@ -1,0 +1,40 @@
+**/target/
+*.class
+# Compiled files
+*.class
+
+target/
+*.class
+*.jar
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite    
+
+#variables de entorno
+.env
+simular_asistencia.py
+
+prueba.html
+
+PulseGymBiometric/
+
+# Entornos virtuales de Python (Virtual Environments)
+venv/
+.venv/
+env/
+*/venv/
+*/.venv/
+*/env/
+IPYNB_FILES/

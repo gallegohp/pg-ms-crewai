@@ -1,0 +1,322 @@
+[
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "{\n  \"success\": false,\n  \"status\": 405,\n  \"error\": \"{\\\"timestamp\\\":\\\"2026-09-11T00:49:24.295+00:00\\\",\\\"status\\\":405,\\\"error\\\":\\\"Method Not Allowed\\\",\\\"path\\\":\\\"/api/equipos\\\"}\"\n}"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.BadRequestError: GroqException - {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'localhost_8000_sse_consultar_equipos\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"localhost_8000_sse_consultar_equipos\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"estado\\\":\\\"activo\\\"}}\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.NotFoundError: GroqException - {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile# claves de api (configura al menos una o usa ollama local)` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.NotFoundError: GroqException - {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "**Equipos del gimnasio**  \n- 1: Máquina de Prensa – OPERATIVO  \n- 2: Maquina de correr – OPERATIVO"
+  },
+  {
+    "role": "user",
+    "content": "quiero modificar la maquina de correr"
+  },
+  {
+    "role": "assistant",
+    "content": "Para poder actualizar la máquina de correr, por favor indícame el **ID** del equipo y los nuevos valores que deseas modificar (estado, fecha de adquisición, fecha de garantía, idProveedor, idSede, marca, modelo, nombre, número de serie y ubicación)."
+  },
+  {
+    "role": "user",
+    "content": "el id 1 y quiero que todos los datos sean los mismos menos el nombre, quiero se tenga de nombre \"te amo moreno\""
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.BadRequestError: GroqException - {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'localhost_8000_sse_actualizar_equipo\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"localhost_8000_sse_actualizar_equipo\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"estado\\\":\\\"OPERATIVO\\\",\\\"fechaAdquisicion\\\":\\\"2023-01-01\\\",\\\"fechaGarantia\\\":\\\"2024-01-01\\\",\\\"id\\\":1,\\\"idProveedor\\\":1,\\\"idSede\\\":1,\\\"marca\\\":\\\"marcaX\\\",\\\"modelo\\\":\\\"modeloY\\\",\\\"nombre\\\":\\\"te amo moreno\\\",\\\"numeroSerie\\\":\\\"123456\\\",\\\"ubicacion\\\":\\\"sede1\\\"}}\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "{\n  \"data\": [\n    {\n      \"id\": 2,\n      \"nombre\": \"Maquina de correr\",\n      \"estado\": \"OPERATIVO\"\n    },\n    {\n      \"id\": 1,\n      \"nombre\": \"Máquina de Prensa\",\n      \"estado\": \"OPERATIVO\"\n    }\n  ],\n  \"success\": true,\n  \"count\": 2,\n  \"message\": \"Lista de todos los equipos\"\n}"
+  },
+  {
+    "role": "user",
+    "content": "cuántos equipos hay en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Hay 0 equipos en mantenimiento."
+  },
+  {
+    "role": "user",
+    "content": "pon la máquina de prensa en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.BadRequestError: GroqException - {\"error\":{\"message\":\"Tool choice is none, but model called a tool\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"localhost_8000_sse_cambiar_estado_equipo\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"estado\\\":\\\"EN_MANTENIMIENTO\\\",\\\"id\\\":1}}\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Equipos disponibles:\n\n1. **Máquina de Prensa** (ID: 1) – Estado: OPERATIVO  \n2. **Maquina de correr** (ID: 2) – Estado: OPERATIVO"
+  },
+  {
+    "role": "user",
+    "content": "cuántos equipos hay en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "0 equipos en mantenimiento."
+  },
+  {
+    "role": "user",
+    "content": "pon la máquina de prensa en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.RateLimitError: RateLimitError: GroqException - {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kxkjfmdef88r9q58w4f1snxm` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6567, Requested 1989. Please try again in 4.17s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "pon la máquina de prensa en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.BadRequestError: GroqException - {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: parameters for tool localhost_8000_sse_consultar_equipos did not match schema: errors: [missing properties: 'marca', 'ubicacion', 'idSede', 'estado']\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"localhost_8000_sse_consultar_equipos\\\", \\\"arguments\\\": {\\\"nombre\\\":\\\"máquina de prensa\\\"}}\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "pon la máquina de prensa en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.BadRequestError: GroqException - {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'localhost_8000_sse_cambiar_estado_equipo\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"localhost_8000_sse_cambiar_estado_equipo\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"estado\\\":\\\"MANTENIMIENTO\\\",\\\"id\\\":1}}\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "pon la maquina de prensa en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.NotFoundError: GroqException - {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.NotFoundError: GroqException - {\"error\":{\"message\":\"The model `compound` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.RateLimitError: RateLimitError: GroqException - {\"error\":{\"message\":\"Rate limit reached for model `meta-llama/llama-4-scout-17b-16e-instruct` in organization `org_01kxkjfmdef88r9q58w4f1snxm` service tier `on_demand` on tokens per minute (TPM): Limit 30000, Used 27510, Requested 5083. Please try again in 5.186s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"compound\",\"code\":\"rate_limit_exceeded\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.BadRequestError: GroqException - {\"error\":{\"message\":\"Request Entity Too Large\",\"type\":\"invalid_request_error\",\"code\":\"request_too_large\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.RateLimitError: RateLimitError: GroqException - {\"error\":{\"message\":\"Rate limit reached for model `meta-llama/llama-4-scout-17b-16e-instruct` in organization `org_01kxkjfmdef88r9q58w4f1snxm` service tier `on_demand` on tokens per minute (TPM): Limit 30000, Used 15627, Requested 17738. Please try again in 6.73s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"compound\",\"code\":\"rate_limit_exceeded\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: litellm.RateLimitError: RateLimitError: GroqException - {\"error\":{\"message\":\"Rate limit reached for model `meta-llama/llama-4-scout-17b-16e-instruct` in organization `org_01kxkjfmdef88r9q58w4f1snxm` service tier `on_demand` on tokens per minute (TPM): Limit 30000, Used 28028, Requested 4623. Please try again in 5.302s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"compound\",\"code\":\"rate_limit_exceeded\"}}\n"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Error al procesar la solicitud: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'This model models/gemini-2.5-flash-lite is no longer available to new users. Please update your code to use models/gemini-3.5-flash-lite for the latest features and improvements. We recommend you to use the Interactions API.', 'status': 'NOT_FOUND'}}"
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Lo siento, ha ocurrido un error de autenticación (Token inválido o expirado) al intentar obtener la lista de equipos."
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "- ID 1: Máquina de Prensa (Estado: MANTENIMIENTO)\n- ID 2: Maquina de correr (Estado: OPERATIVO)"
+  },
+  {
+    "role": "user",
+    "content": "pon la máquina de prensa en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "La máquina de prensa ya se encuentra en estado MANTENIMIENTO."
+  },
+  {
+    "role": "user",
+    "content": "pon la máquina de prensa operativa"
+  },
+  {
+    "role": "assistant",
+    "content": "La máquina de prensa ha sido puesta en estado operativo exitosamente."
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Aquí está la lista de equipos del gimnasio:\n\n1. **ID 1:** Máquina de Prensa (Estado: OPERATIVO)\n2. **ID 2:** Maquina de correr (Estado: OPERATIVO)"
+  },
+  {
+    "role": "user",
+    "content": "que tools tienes configuradas"
+  },
+  {
+    "role": "assistant",
+    "content": "Tengo configuradas herramientas para gestionar equipos (listar, consultar, cambiar estado, actualizar, reportar fallas y contar por estado), controlar asistencias (registrar entrada, ver asistencia de hoy, por sede e historial de usuario) y administrar proveedores (registrar, listar, obtener, actualizar y eliminar)."
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "No se pudo conectar con el servidor para obtener la lista de equipos en este momento. Por favor, inténtalo más tarde."
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "No se pudo conectar con el servidor para obtener la lista de equipos en este momento. Por favor, inténtalo más tarde."
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "Aquí tienes la lista de los equipos del gimnasio:\n\n1. **Banco Plano** (ID: 3) - Estado: MANTENIMIENTO\n2. **Caminadora** (ID: 4) - Estado: MANTENIMIENTO\n3. **Máquina de Sentadilla** (ID: 2) - Estado: MANTENIMIENTO\n4. **Caminadora ProRunner XT** (ID: 5) - Estado: OPERATIVO\n5. **Máquina de Prensa** (ID: 1) - Estado: OPERATIVO"
+  },
+  {
+    "role": "user",
+    "content": "necesito que pongas lo que son el banco plano y la caminadora en operacion"
+  },
+  {
+    "role": "assistant",
+    "content": "El Banco Plano y la Caminadora han sido puestos en operación exitosamente (estado OPERATIVO)."
+  },
+  {
+    "role": "user",
+    "content": "puedes ponerlos todos en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Todos los equipos han sido cambiados a estado MANTENIMIENTO exitosamente."
+  },
+  {
+    "role": "user",
+    "content": "dame todas las herramientas que tengas configuradas"
+  },
+  {
+    "role": "assistant",
+    "content": "Tengo configuradas herramientas para:\n- **Equipos:** Listar, consultar, actualizar, cambiar estado, contar por estado, reportar fallas y listar reportes de fallas.\n- **Asistencias:** Registrar entrada, ver asistencias de hoy, de una sede y el historial de asistencia de un usuario.\n- **Proveedores:** Registrar, listar, obtener por ID, actualizar y eliminar proveedores."
+  },
+  {
+    "role": "user",
+    "content": "quiero registar la entrada el socio con el docuemndot de identidad 222222"
+  },
+  {
+    "role": "assistant",
+    "content": "Para registrar la entrada de un socio, necesito que me proporciones su **ID de usuario** (número de identificación interna), el **ID de la sede** y el **tipo de acceso** (que puede ser `APP`, `MANUAL` o `QR`), ya que el número de documento de identidad por sí solo no es suficiente para la herramienta. \n\nPor favor, indícame estos datos para proceder con el registro."
+  },
+  {
+    "role": "user",
+    "content": "puedes poner todos los equipos en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "No es posible completar la solicitud debido a que el token de autenticación es inválido o ha expirado."
+  },
+  {
+    "role": "user",
+    "content": "pueedes dame una lista de todos los equipos"
+  },
+  {
+    "role": "assistant",
+    "content": "El sistema indicó que el token es inválido o ha expirado. Por favor, proporcione un token válido o vuelva a iniciar sesión para poder consultar la lista de equipos."
+  },
+  {
+    "role": "user",
+    "content": "dame la lista de equipos del gimnasio"
+  },
+  {
+    "role": "assistant",
+    "content": "- ID 1: Máquina de Prensa (OPERATIVO)\n- ID 2: Máquina de Sentadilla (OPERATIVO)\n- ID 3: Banco Plano (OPERATIVO)\n- ID 4: Caminadora (OPERATIVO)\n- ID 5: Caminadora ProRunner XT (OPERATIVO)\n- ID 6: Máquina de sentadilla (MANTENIMIENTO)"
+  },
+  {
+    "role": "user",
+    "content": "puedes poner todos los equipos en mantenimiento"
+  },
+  {
+    "role": "assistant",
+    "content": "Todos los equipos han sido cambiados a estado MANTENIMIENTO exitosamente."
+  },
+  {
+    "role": "user",
+    "content": "puedes volver a ponerlo todo operativo y darme un analisis de los equipos"
+  },
+  {
+    "role": "assistant",
+    "content": "Todos los equipos (6 en total) han sido puestos en estado OPERATIVO. \n\n**Análisis de equipos:**\n- Total de equipos registrados: 6\n- Equipos operativos: 6 (100%)\n- Equipos en mantenimiento: 0 (0%)\n\nEl gimnasio se encuentra 100% operativo y listo para su uso."
+  }
+]
