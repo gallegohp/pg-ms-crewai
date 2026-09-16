@@ -1,6 +1,16 @@
-crewai[google-genai]>=1.15.0
-google-genai>=1.0.0
+# ── CrewAI con soporte LiteLLM (obligatorio para usar Groq) ──
+crewai[litellm]>=1.15.0
+litellm>=1.55.0
+
+# ── SDK de OpenAI (LiteLLM lo usa para hablar con Groq, que es OpenAI-compatible) ──
+openai>=1.55.0
+
+# ── MCP ──
+mcp>=1.28.1
+
+# ── Flask y utilidades web ──
 flask>=3.0.0
 flask-cors>=4.0.0
+
+# ── Carga de variables de entorno ──
 python-dotenv>=1.0.0
-mcp>=1.28.1

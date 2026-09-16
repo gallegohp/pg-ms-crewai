@@ -2,9 +2,10 @@
 Servidor Flask - API REST del Agente Conversacional CrewAI + MCP.
 """
 
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from agent.conversational_agent import process_message, get_history, clear_history
+from agent.conversational_agent import process_message
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -15,8 +16,12 @@ def status():
     """Estado del servidor MCP y LLM."""
     return jsonify({
         "status": "online",
-        "mcp": {"online": True, "mode": "stdio (subproceso automático)"},
-        "llm": {"model": "gemini-1.5-flash"}
+        "mcp": {
+            "online": True,
+            "mode": os.getenv("MCP_TRANSPORT", "sse"),
+            "url": os.getenv("MCP_SERVER_URL", ""),
+        },
+        "llm": {"model": os.getenv("LLM_MODEL", "groq/compound")}
     })
 
 
@@ -35,19 +40,8 @@ def chat():
     })
 
 
-@app.route("/api/history", methods=["GET"])
-def history():
-    """Retorna el historial de conversación persistido."""
-    return jsonify({"messages": get_history()})
-
-
-@app.route("/api/history/clear", methods=["POST"])
-def clear():
-    """Limpia el historial de conversación."""
-    clear_history()
-    return jsonify({"success": True})
-
-
 if __name__ == "__main__":
-    print("🚀 Servidor Flask API en http://127.0.0.1:5000")
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    host = os.getenv("FLASK_HOST", "0.0.0.0")
+    port = int(os.getenv("FLASK_PORT", "5000"))
+    print(f"🚀 Servidor Flask API en http://{host}:{port}")
+    app.run(host=host, port=port, debug=False)
