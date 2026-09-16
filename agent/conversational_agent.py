@@ -2,11 +2,17 @@
 Agente Conversacional con CrewAI + MCP.
 Optimizado para reducir el consumo de tokens del LLM.
 
-Migrado a groq/compound (70K TPM vs 8K TPM de gpt-oss-120b).
-Herramientas MCP filtradas para reducir el esquema enviado al LLM.
+IMPORTANTE: groq/compound y groq/compound-mini NO soportan tools
+personalizadas (custom function-calling) según la documentación oficial
+de Groq — solo pueden usar sus propias tools internas (web search, code
+execution, etc). Por eso no se usan aquí: el modelo nunca llegaba a
+invocar las tools MCP y terminaba inventando respuestas. Se usa en su
+lugar un modelo estándar de Groq con tool-calling real y soporte
+confirmado en esta cuenta: groq/openai/gpt-oss-120b.
 """
 
 import os
+import time
 import threading
 
 # ── Limpiar variables de Google ──
@@ -31,6 +37,7 @@ _agent_lock = threading.Lock()
 _env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
 load_dotenv(dotenv_path=os.path.abspath(_env_path), override=False)
 
+# Segunda limpieza por si el .env las reintrodujo
 for _var in (
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
@@ -42,6 +49,11 @@ for _var in (
 from crewai import Agent, Task, LLM
 from crewai.mcp import MCPServerSSE
 from crewai.mcp.filters import create_static_tool_filter
+
+# ── Configurar LiteLLM para reintentos agresivos ──
+import litellm
+litellm.num_retries = 10
+litellm.request_timeout = 60
 
 # Parche de compatibilidad con Groq
 try:
@@ -55,15 +67,13 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────
 # Solo cargamos las herramientas más relevantes para reducir
 # el esquema JSON que CrewAI envía al LLM en cada request.
-#
-# 17 tools completas ≈ 4.000 tokens de esquema
-# 5 tools filtradas ≈ 1.000 tokens de esquema
-# Ahorro: ~75% menos tokens de entrada por request.
 
 TOOLS_RELEVANTES = [
     # Equipos
     "consultar_equipos",
     "contar_equipos_por_estado",
+    "cambiar_estado_equipo",
+    "reportar_falla_equipo",
     # Asistencias
     "consultar_asistencias",
     "contar_asistencias_por_fecha",
@@ -78,13 +88,13 @@ mcp_server = MCPServerSSE(
     tool_filter=create_static_tool_filter(
         allowed_tool_names=TOOLS_RELEVANTES
     ),
-    cache_tools_list=True,  # Reutiliza la lista entre requests
+    cache_tools_list=True,
 )
 
 # ─────────────────────────────────────────────────────────────
 # LLM
 # ─────────────────────────────────────────────────────────────
-llm_model = os.getenv("LLM_MODEL", "groq/compound")
+llm_model = os.getenv("LLM_MODEL", "groq/openai/gpt-oss-120b")
 llm_provider = os.getenv("LLM_PROVIDER", "").strip().lower()
 
 print("─" * 60)
@@ -99,27 +109,26 @@ print("─" * 60)
 if llm_model.startswith("groq/"):
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
     if not groq_key:
-        raise RuntimeError(
-            "GROQ_API_KEY está vacía. Revisa tu .env."
-        )
+        raise RuntimeError("GROQ_API_KEY está vacía. Revisa tu .env.")
     llm = LLM(
-        model=llm_model,                          # "groq/compound"
+        model=llm_model,                      # ej: "groq/openai/gpt-oss-120b"
         api_key=groq_key,
         base_url="https://api.groq.com/openai/v1",
-        max_tokens=512,
-        max_retries=5,
+        max_tokens=256,
+        max_retries=10,
+        timeout=60,
     )
 elif llm_model.startswith("gemini/"):
     llm = LLM(
         model=llm_model,
         api_key=os.getenv("GEMINI_API_KEY", ""),
-        max_tokens=512,
+        max_tokens=256,
     )
 else:
     llm = LLM(
         model=llm_model,
         api_key=os.getenv("OPENAI_API_KEY", ""),
-        max_tokens=512,
+        max_tokens=256,
     )
 
 # ─────────────────────────────────────────────────────────────
@@ -147,6 +156,12 @@ def _get_mcp_tools():
                 _assistant_template.mcps
             )
             print(f"✅ {len(_mcp_tools_cache)} herramientas MCP filtradas cargadas")
+
+            # ── DEBUG: nombres reales de las tools cargadas ──
+            print("🔍 Nombres reales de las herramientas cargadas:")
+            for tool in _mcp_tools_cache:
+                print(f"   - {tool.name}")
+
         except Exception as e:
             print(f"⚠️  No se pudieron cargar las herramientas del MCP ({e})")
             _mcp_tools_cache = []
@@ -160,25 +175,41 @@ def _create_agent() -> Agent:
     """Crea un agente limpio con las herramientas filtradas."""
     return Agent(
         role="Asistente de gimnasio",
-        goal="Ayudar con equipos, asistencias y proveedores usando las herramientas.",
+        goal="Ayudar con equipos, asistencias y proveedores.",
         backstory=(
-            "Asistente conciso en español. "
-            "Si el usuario menciona un equipo por NOMBRE y necesitas su ID, "
-            "PRIMERO usa `consultar_equipos` con el nombre para obtener el ID real. "
-            "NUNCA inventes IDs. "
-            "Usa exactamente los valores de enum indicados en las descripciones."
+            "Asistente de gimnasio en español. "
+            "Usa las herramientas disponibles para responder sobre equipos, "
+            "asistencias y proveedores. Si necesitas el ID de un equipo, "
+            "primero usa `consultar_equipos`. Nunca inventes IDs ni datos: "
+            "si una herramienta falla o no tienes la información, dilo. Sé breve."
         ),
         tools=list(_get_mcp_tools()),
         llm=llm,
         verbose=True,
-        max_iter=3,
+        max_iter=5,                # margen para: buscar ID → actuar → responder
     )
+
+
+# ─────────────────────────────────────────────────────────────
+# Throttle para evitar agotar la cuota de Groq
+# ─────────────────────────────────────────────────────────────
+_last_request_time = 0.0
+_min_interval = 3.0  # segundos entre requests (máx ~20 req/min)
 
 
 # ─────────────────────────────────────────────────────────────
 # Procesamiento
 # ─────────────────────────────────────────────────────────────
 def process_message(user_input: str) -> str:
+    global _last_request_time
+
+    # Throttle: garantiza un mínimo de separación entre requests
+    elapsed = time.time() - _last_request_time
+    if elapsed < _min_interval:
+        wait = _min_interval - elapsed
+        print(f"⏳ Throttle: esperando {wait:.1f}s")
+        time.sleep(wait)
+
     try:
         agent = _create_agent()
         task = Task(
@@ -188,8 +219,10 @@ def process_message(user_input: str) -> str:
         )
         with _agent_lock:
             response = str(agent.execute_task(task))
+        _last_request_time = time.time()
     except Exception as exc:
         response = f"Error al procesar la solicitud: {exc}"
+        _last_request_time = time.time()
 
     return response
 

@@ -3,6 +3,7 @@ import litellm
 
 _original_completion = litellm.completion
 
+
 def _strip_key_from_messages(messages, key):
     """Elimina una clave de cada mensaje en la lista, incluyendo content blocks."""
     if not isinstance(messages, list):
@@ -10,9 +11,7 @@ def _strip_key_from_messages(messages, key):
     for msg in messages:
         if not isinstance(msg, dict):
             continue
-        # Nivel del mensaje (ej: {"role": "system", "content": "...", "cache_breakpoint": {...}})
         msg.pop(key, None)
-        # Nivel del bloque de contenido (ej: {"type": "text", "cache_breakpoint": {...}})
         content = msg.get("content")
         if isinstance(content, list):
             for block in content:
@@ -22,11 +21,11 @@ def _strip_key_from_messages(messages, key):
 
 
 def _patched_completion(*args, **kwargs):
-    # 1. Eliminar la clave si viene como argumento de nivel superior
+    # 1. Eliminar claves problemáticas de nivel superior
     kwargs.pop("cache_breakpoint", None)
     kwargs.pop("is_litellm", None)
 
-    # 2. Eliminar la clave si está dentro de los mensajes
+    # 2. Eliminar claves problemáticas dentro de los mensajes
     if "messages" in kwargs:
         _strip_key_from_messages(kwargs["messages"], "cache_breakpoint")
         _strip_key_from_messages(kwargs["messages"], "is_litellm")
