@@ -114,7 +114,8 @@ if llm_model.startswith("groq/"):
         model=llm_model,                      # ej: "groq/openai/gpt-oss-120b"
         api_key=groq_key,
         base_url="https://api.groq.com/openai/v1",
-        max_tokens=256,
+        max_tokens=450,     # margen para no cortar tablas/listas a mitad de respuesta
+        temperature=0.2,    # baja variabilidad: misma consulta -> mismo formato de respuesta
         max_retries=10,
         timeout=60,
     )
@@ -122,13 +123,15 @@ elif llm_model.startswith("gemini/"):
     llm = LLM(
         model=llm_model,
         api_key=os.getenv("GEMINI_API_KEY", ""),
-        max_tokens=256,
+        max_tokens=450,
+        temperature=0.2,
     )
 else:
     llm = LLM(
         model=llm_model,
         api_key=os.getenv("OPENAI_API_KEY", ""),
-        max_tokens=256,
+        max_tokens=450,
+        temperature=0.2,
     )
 
 # ─────────────────────────────────────────────────────────────
@@ -171,18 +174,39 @@ def _get_mcp_tools():
 _get_mcp_tools()
 
 
+AGENT_BACKSTORY = (
+    "Asistente de gimnasio en español. SOLO respondes sobre equipos, "
+    "asistencias y proveedores del gimnasio, usando las herramientas "
+    "disponibles. Si la pregunta no tiene relación con esos tres temas "
+    "(aunque sea sobre otro tema general), responde exactamente: "
+    "\"Solo puedo ayudarte con equipos, asistencias y proveedores del "
+    "gimnasio.\" y no uses ninguna herramienta.\n\n"
+    "Reglas de formato — síguelas siempre igual para que la misma consulta "
+    "produzca siempre la misma forma de respuesta:\n"
+    "- Si el resultado trae 2 o más elementos (lista de equipos, "
+    "asistencias, proveedores, reportes, etc.), respóndelo como una tabla "
+    "Markdown con solo las columnas relevantes a la pregunta.\n"
+    "- Si el resultado es un solo dato, una confirmación o un conteo, "
+    "respóndelo en una sola frase corta, sin tabla.\n"
+    "- Nunca mezcles ambos formatos para el mismo tipo de consulta ni "
+    "repitas en texto lo que ya está en la tabla.\n\n"
+    "Si necesitas el ID de un equipo, primero usa `consultar_equipos`. "
+    "Nunca inventes IDs ni datos: si una herramienta falla o no tienes la "
+    "información, dilo brevemente. Sé conciso: prioriza claridad sobre "
+    "extensión."
+)
+
+
 def _create_agent() -> Agent:
     """Crea un agente limpio con las herramientas filtradas."""
     return Agent(
         role="Asistente de gimnasio",
-        goal="Ayudar con equipos, asistencias y proveedores.",
-        backstory=(
-            "Asistente de gimnasio en español. "
-            "Usa las herramientas disponibles para responder sobre equipos, "
-            "asistencias y proveedores. Si necesitas el ID de un equipo, "
-            "primero usa `consultar_equipos`. Nunca inventes IDs ni datos: "
-            "si una herramienta falla o no tienes la información, dilo. Sé breve."
+        goal=(
+            "Responder de forma breve, completa y con formato consistente "
+            "sobre equipos, asistencias y proveedores del gimnasio. "
+            "Rechazar cualquier pregunta fuera de esos temas."
         ),
+        backstory=AGENT_BACKSTORY,
         tools=list(_get_mcp_tools()),
         llm=llm,
         verbose=True,
@@ -214,7 +238,11 @@ def process_message(user_input: str) -> str:
         agent = _create_agent()
         task = Task(
             description=user_input,
-            expected_output="Respuesta breve en español.",
+            expected_output=(
+                "Si es tema fuera de equipos/asistencias/proveedores, el "
+                "mensaje fijo de rechazo. Si es una lista, tabla Markdown. "
+                "Si es un solo dato, una frase breve en español."
+            ),
             agent=agent,
         )
         with _agent_lock:
