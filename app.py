@@ -4,7 +4,9 @@ Servidor Flask - API REST del Agente Conversacional CrewAI + MCP.
 
 import json
 import os
+import time
 import threading
+from collections import deque
 from pathlib import Path
 
 from flask import Flask, request, jsonify
@@ -17,6 +19,28 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 HISTORY_PATH = Path(__file__).parent / "data" / "history" / "live_session.json"
 HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
 _history_lock = threading.Lock()
+
+# ─────────────────────────────────────────────────────────────
+# Rate limit por minuto para /api/chat.
+# Corta rápido (HTTP 429) antes de encolar trabajo al LLM, en vez de
+# dejar que las solicitudes se acumulen esperando el throttle interno
+# del agente. Ventana deslizante en memoria (un solo proceso/contenedor).
+# ─────────────────────────────────────────────────────────────
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "15"))
+_rate_lock = threading.Lock()
+_request_times: deque = deque()
+
+
+def _check_rate_limit() -> float:
+    """Devuelve 0 si la solicitud está permitida, o los segundos a esperar."""
+    now = time.time()
+    with _rate_lock:
+        while _request_times and now - _request_times[0] > 60:
+            _request_times.popleft()
+        if len(_request_times) >= RATE_LIMIT_PER_MINUTE:
+            return round(60 - (now - _request_times[0]), 1)
+        _request_times.append(now)
+        return 0
 
 
 def _load_history() -> list:
@@ -45,7 +69,8 @@ def status():
             "mode": os.getenv("MCP_TRANSPORT", "sse"),
             "url": os.getenv("MCP_SERVER_URL", ""),
         },
-        "llm": {"model": os.getenv("LLM_MODEL", "groq/openai/gpt-oss-120b")}
+        "llm": {"model": os.getenv("LLM_MODEL", "groq/openai/gpt-oss-120b")},
+        "rate_limit": {"per_minute": RATE_LIMIT_PER_MINUTE},
     })
 
 
@@ -56,6 +81,15 @@ def chat():
     message = data.get("message", "").strip()
     if not message:
         return jsonify({"error": "Mensaje requerido"}), 400
+
+    wait = _check_rate_limit()
+    if wait > 0:
+        response = jsonify({
+            "error": "Demasiadas solicitudes. Intenta de nuevo en unos segundos.",
+            "retry_after": wait,
+        })
+        response.headers["Retry-After"] = str(int(wait) + 1)
+        return response, 429
 
     _append_history("user", message)
     response = process_message(message)
