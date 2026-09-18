@@ -16,8 +16,11 @@ porque el loop la ejecuta él mismo.
 
 import json
 
+from agent.errors import RateLimitExceeded
 from agent.llm_client import chat
 from agent.mcp_client import call_tool
+
+_RATE_LIMIT_MARKERS = ("RateLimitError", "rate_limit_exceeded", "TPM", "ITPM", "RPM")
 
 
 def _run_once(api_key: str, system_prompt: str, user_input: str, tools: list, max_iters: int):
@@ -28,7 +31,12 @@ def _run_once(api_key: str, system_prompt: str, user_input: str, tools: list, ma
     used_tool = False
 
     for _ in range(max_iters):
-        resp = chat(api_key, messages, tools=tools)
+        try:
+            resp = chat(api_key, messages, tools=tools)
+        except Exception as exc:
+            if any(marker in str(exc) for marker in _RATE_LIMIT_MARKERS):
+                raise RateLimitExceeded(str(exc)) from exc
+            raise
         msg = resp.choices[0].message
         tool_calls = msg.tool_calls
 
@@ -79,6 +87,11 @@ def run(
     for _ in range(retries + 1):
         try:
             content, used_tool = _run_once(api_key, system_prompt, user_input, tools, max_iters)
+        except RateLimitExceeded:
+            # No tiene sentido reintentar: va a chocar con el mismo límite.
+            # Se deja propagar para que app.py responda 429 en vez de 200
+            # con el error escondido adentro del texto de la respuesta.
+            raise
         except Exception as exc:
             last_error = f"Error al procesar la solicitud: {exc}"
             continue
