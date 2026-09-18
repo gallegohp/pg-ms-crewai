@@ -1,12 +1,16 @@
-# ── CrewAI con soporte LiteLLM (obligatorio para usar Groq) ──
-crewai[litellm]>=1.15.0
+# ── LiteLLM (habla con Groq, que es OpenAI-compatible) ──
 litellm>=1.55.0
+tenacity>=8.0.0
 
 # ── SDK de OpenAI (LiteLLM lo usa para hablar con Groq, que es OpenAI-compatible) ──
 openai>=1.55.0
 
 # ── MCP ──
-mcp>=1.28.1
+# Fijado en la misma línea 1.x que usa pg-ms-ai-new (el servidor). mcp 2.x
+# renombró Tool.inputSchema -> Tool.input_schema (rompe nuestro cliente) y
+# no está probado contra el server; si algún día se sube el server a 2.x,
+# hay que subir esto junto con él y ajustar agent/mcp_client.py.
+mcp>=1.28.1,<2.0.0
 
 # ── Flask y utilidades web ──
 flask>=3.0.0

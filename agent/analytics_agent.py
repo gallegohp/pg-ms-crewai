@@ -2,32 +2,22 @@
 Agente de analítica: ingresos (dinero), mora y afluencia (entradas
 físicas) del gimnasio.
 
-Usa la cuenta de Groq TOKEN_GROQ3 (ver llm_config.py). Si esa cuenta no
-está configurada, el agente queda deshabilitado y lo dice explícitamente
-en vez de fallar.
+Usa la cuenta de Groq TOKEN_GROQ3 (ver llm_client.py) y el loop de
+function-calling manual (ver tool_loop.py) — sin CrewAI. Si esa cuenta
+no está configurada, el agente queda deshabilitado y lo dice
+explícitamente en vez de fallar.
 """
 
-import threading
-
-from crewai import Agent
-
-from agent.llm_config import LLM_ANALITICA
-from agent.mcp_tools import TOOLS_ANALITICA, tools_for
-from agent.task_runner import run_with_retries
+from agent.llm_client import KEY_ANALITICA
+from agent.mcp_client import TOOLS_ANALITICA, get_tool_schemas
 from agent.throttle import Throttle
+from agent.tool_loop import run as run_tool_loop
 
-_agent_lock = threading.Lock()
 _throttle = Throttle(min_interval=3.0)  # máx ~20 req/min en esta cuenta
-
-EXPECTED_OUTPUT = (
-    "Si es tema fuera de ingresos/mora/afluencia, el mensaje fijo de "
-    "rechazo. Si es una lista, tabla Markdown. Si es un solo dato, una "
-    "frase breve en español."
-)
 
 REJECTION_MESSAGE = "Solo puedo ayudarte con ingresos, mora y afluencia del gimnasio."
 
-AGENT_BACKSTORY = (
+SYSTEM_PROMPT = (
     "Analista de datos de un gimnasio, en español. SOLO respondes sobre "
     "ingresos (dinero de pagos/membresías), mora y afluencia (entradas "
     "físicas de socios) del gimnasio, usando las herramientas disponibles. "
@@ -54,31 +44,17 @@ AGENT_BACKSTORY = (
     "Nunca inventes cifras. Sé conciso: prioriza claridad sobre extensión."
 )
 
-
-def _create_agent() -> Agent:
-    return Agent(
-        role="Analista de datos del gimnasio",
-        goal=(
-            "Responder de forma breve, completa y con formato consistente "
-            "sobre ingresos, mora y afluencia del gimnasio. Rechazar "
-            "cualquier pregunta fuera de esos temas."
-        ),
-        backstory=AGENT_BACKSTORY,
-        tools=tools_for(TOOLS_ANALITICA),
-        llm=LLM_ANALITICA,
-        verbose=True,
-        max_iter=5,
-    )
+_TOOLS = get_tool_schemas(TOOLS_ANALITICA)
 
 
 def process_analitica(user_input: str) -> str:
-    if LLM_ANALITICA is None:
+    if KEY_ANALITICA is None:
         return (
             "El agente de analítica no está disponible todavía: falta "
             "configurar TOKEN_GROQ3 en el .env."
         )
 
     _throttle.wait()
-    return run_with_retries(
-        _create_agent, user_input, EXPECTED_OUTPUT, _agent_lock, REJECTION_MESSAGE
+    return run_tool_loop(
+        KEY_ANALITICA, SYSTEM_PROMPT, user_input, _TOOLS, REJECTION_MESSAGE
     )

@@ -12,7 +12,7 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from agent.conversational_agent import process_message
-from agent.llm_config import LLM_ANALITICA, LLM_ORQUESTADOR
+from agent.llm_client import KEY_ANALITICA, KEY_ORQUESTADOR
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -74,8 +74,8 @@ def status():
         "rate_limit": {"per_minute": RATE_LIMIT_PER_MINUTE},
         "agents": {
             "operacional": True,
-            "analitica": LLM_ANALITICA is not None,
-            "orquestador_con_llm": LLM_ORQUESTADOR is not None,
+            "analitica": KEY_ANALITICA is not None,
+            "orquestador_con_llm": KEY_ORQUESTADOR is not None,
         },
     })
 

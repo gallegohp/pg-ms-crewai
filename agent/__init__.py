@@ -1,16 +1,13 @@
 """
-Módulo de Agente Conversacional con CrewAI y MCP.
+Módulo de Agente Conversacional — litellm directo, sin CrewAI.
 
 Este __init__ prepara el entorno UNA sola vez (limpieza de variables de
-Google, flags de CrewAI, carga del .env y parche de LiteLLM) antes de que
-cualquier submódulo (llm_config, mcp_tools, operational_agent,
-analytics_agent) importe `crewai`. El orden importa: CrewAI lee algunas
-de estas variables de entorno al importarse.
+Google y carga del .env) antes de que cualquier submódulo importe
+litellm, para que no dude de qué proveedor usar.
 """
 
 import os
 
-# ── Limpiar variables de Google ──
 for _var in (
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
@@ -18,12 +15,6 @@ for _var in (
     "GOOGLE_APPLICATION_CREDENTIALS",
 ):
     os.environ.pop(_var, None)
-
-# ── Forzar LiteLLM ──
-os.environ["CREWAI_LLM_USE_LITELLM"] = "true"
-os.environ["CREWAI_TRACING_ENABLED"] = "false"
-os.environ["CREWAI_TELEMETRY_OPT_OUT"] = "true"
-os.environ["OTEL_SDK_DISABLED"] = "true"
 
 from dotenv import load_dotenv
 
@@ -38,15 +29,3 @@ for _var in (
     "GOOGLE_APPLICATION_CREDENTIALS",
 ):
     os.environ.pop(_var, None)
-
-# ── Configurar LiteLLM para reintentos agresivos ──
-import litellm
-litellm.num_retries = 10
-litellm.request_timeout = 60
-
-# Parche de compatibilidad con Groq
-try:
-    from agent.litellm_patch import apply_patch
-    apply_patch()
-except ImportError:
-    pass
