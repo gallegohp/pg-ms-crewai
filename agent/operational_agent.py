@@ -6,22 +6,36 @@ Usa la cuenta de Groq GROQ_API_KEY (ver llm_config.py).
 
 import threading
 
-from crewai import Agent, Task
+from crewai import Agent
 
 from agent.llm_config import LLM_OPERACIONAL
 from agent.mcp_tools import TOOLS_OPERACIONAL, tools_for
+from agent.task_runner import run_with_retries
 from agent.throttle import Throttle
 
 _agent_lock = threading.Lock()
 _throttle = Throttle(min_interval=3.0)  # máx ~20 req/min en esta cuenta
 
+EXPECTED_OUTPUT = (
+    "Si es tema fuera de equipos/asistencias/proveedores, el mensaje fijo "
+    "de rechazo. Si es una lista, tabla Markdown. Si es un solo dato, una "
+    "frase breve en español."
+)
+
+REJECTION_MESSAGE = (
+    "Solo puedo ayudarte con equipos, asistencias y proveedores del gimnasio."
+)
+
 AGENT_BACKSTORY = (
     "Asistente de gimnasio en español. SOLO respondes sobre equipos, "
     "asistencias y proveedores del gimnasio, usando las herramientas "
-    "disponibles. Si la pregunta no tiene relación con esos tres temas "
-    "(aunque sea sobre otro tema general), responde exactamente: "
-    "\"Solo puedo ayudarte con equipos, asistencias y proveedores del "
-    "gimnasio.\" y no uses ninguna herramienta.\n\n"
+    "disponibles. No tienes navegador ni buscador web: no existe ninguna "
+    "herramienta de búsqueda, repositorio o internet, solo las que se te "
+    "dan explícitamente. No inventes ni llames herramientas que no estén "
+    "en tu lista. Si la pregunta no tiene relación con esos tres temas "
+    "(aunque sea sobre otro tema general), responde EXACTAMENTE esta "
+    f"frase, sin agregar nada más: \"{REJECTION_MESSAGE}\" y no uses "
+    "ninguna herramienta.\n\n"
     "Reglas de formato — síguelas siempre igual para que la misma consulta "
     "produzca siempre la misma forma de respuesta:\n"
     "- Si el resultado trae 2 o más elementos (lista de equipos, "
@@ -56,18 +70,6 @@ def _create_agent() -> Agent:
 
 def process_operacional(user_input: str) -> str:
     _throttle.wait()
-    try:
-        agent = _create_agent()
-        task = Task(
-            description=user_input,
-            expected_output=(
-                "Si es tema fuera de equipos/asistencias/proveedores, el "
-                "mensaje fijo de rechazo. Si es una lista, tabla Markdown. "
-                "Si es un solo dato, una frase breve en español."
-            ),
-            agent=agent,
-        )
-        with _agent_lock:
-            return str(agent.execute_task(task))
-    except Exception as exc:
-        return f"Error al procesar la solicitud: {exc}"
+    return run_with_retries(
+        _create_agent, user_input, EXPECTED_OUTPUT, _agent_lock, REJECTION_MESSAGE
+    )

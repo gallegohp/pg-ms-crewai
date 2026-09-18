@@ -9,21 +9,33 @@ en vez de fallar.
 
 import threading
 
-from crewai import Agent, Task
+from crewai import Agent
 
 from agent.llm_config import LLM_ANALITICA
 from agent.mcp_tools import TOOLS_ANALITICA, tools_for
+from agent.task_runner import run_with_retries
 from agent.throttle import Throttle
 
 _agent_lock = threading.Lock()
 _throttle = Throttle(min_interval=3.0)  # máx ~20 req/min en esta cuenta
 
+EXPECTED_OUTPUT = (
+    "Si es tema fuera de ingresos/mora/afluencia, el mensaje fijo de "
+    "rechazo. Si es una lista, tabla Markdown. Si es un solo dato, una "
+    "frase breve en español."
+)
+
+REJECTION_MESSAGE = "Solo puedo ayudarte con ingresos, mora y afluencia del gimnasio."
+
 AGENT_BACKSTORY = (
     "Analista de datos de un gimnasio, en español. SOLO respondes sobre "
     "ingresos (dinero de pagos/membresías), mora y afluencia (entradas "
     "físicas de socios) del gimnasio, usando las herramientas disponibles. "
-    "Si la pregunta no tiene relación con esos temas, responde exactamente: "
-    "\"Solo puedo ayudarte con ingresos, mora y afluencia del gimnasio.\" "
+    "No tienes navegador ni buscador web: no existe ninguna herramienta de "
+    "búsqueda, repositorio o internet, solo las que se te dan "
+    "explícitamente. No inventes ni llames herramientas que no estén en tu "
+    "lista. Si la pregunta no tiene relación con esos temas, responde "
+    f"EXACTAMENTE esta frase, sin agregar nada más: \"{REJECTION_MESSAGE}\" "
     "y no uses ninguna herramienta.\n\n"
     "Distingue bien los dos sentidos de 'ingreso': dinero recibido (tools "
     "de reporte de ingresos) contra entradas físicas al gimnasio "
@@ -67,18 +79,6 @@ def process_analitica(user_input: str) -> str:
         )
 
     _throttle.wait()
-    try:
-        agent = _create_agent()
-        task = Task(
-            description=user_input,
-            expected_output=(
-                "Si es tema fuera de ingresos/mora/afluencia, el mensaje "
-                "fijo de rechazo. Si es una lista, tabla Markdown. Si es "
-                "un solo dato, una frase breve en español."
-            ),
-            agent=agent,
-        )
-        with _agent_lock:
-            return str(agent.execute_task(task))
-    except Exception as exc:
-        return f"Error al procesar la solicitud: {exc}"
+    return run_with_retries(
+        _create_agent, user_input, EXPECTED_OUTPUT, _agent_lock, REJECTION_MESSAGE
+    )
