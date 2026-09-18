@@ -18,7 +18,7 @@ tema.
 
 import re
 
-from agent.llm_config import LLM_ORQUESTADOR
+from agent.llm_client import KEY_ORQUESTADOR, chat as llm_chat
 from agent.throttle import Throttle
 
 RECHAZO = (
@@ -48,7 +48,7 @@ def _match_count(text: str, keywords: list) -> int:
 
 
 def _classify_with_llm(text: str) -> str:
-    if LLM_ORQUESTADOR is None:
+    if KEY_ORQUESTADOR is None:
         # Sin cuenta dedicada: si hubo AL MENOS una señal de alguna lista
         # ya se habría resuelto antes de llegar aquí, así que este caso
         # es "no matcheó nada" -> mejor rechazar que adivinar.
@@ -68,7 +68,13 @@ def _classify_with_llm(text: str) -> str:
         f"Mensaje: {text}"
     )
     try:
-        respuesta = str(LLM_ORQUESTADOR.call(prompt)).strip().upper()
+        resp = llm_chat(
+            KEY_ORQUESTADOR,
+            [{"role": "user", "content": prompt}],
+            max_tokens=200,
+            temperature=0.0,
+        )
+        respuesta = (resp.choices[0].message.content or "").strip().upper()
     except Exception:
         return "ninguna"
 
