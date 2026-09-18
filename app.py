@@ -12,6 +12,7 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from agent.conversational_agent import process_message
+from agent.errors import RateLimitExceeded
 from agent.llm_client import KEY_ANALITICA, KEY_ORQUESTADOR
 
 app = Flask(__name__)
@@ -70,7 +71,7 @@ def status():
             "mode": os.getenv("MCP_TRANSPORT", "sse"),
             "url": os.getenv("MCP_SERVER_URL", ""),
         },
-        "llm": {"model": os.getenv("LLM_MODEL", "groq/openai/gpt-oss-120b")},
+        "llm": {"model": os.getenv("LLM_MODEL", "groq/qwen/qwen3.8-27b")},
         "rate_limit": {"per_minute": RATE_LIMIT_PER_MINUTE},
         "agents": {
             "operacional": True,
@@ -98,7 +99,16 @@ def chat():
         return response, 429
 
     _append_history("user", message)
-    response = process_message(message)
+    try:
+        response = process_message(message)
+    except RateLimitExceeded as exc:
+        return jsonify({
+            "success": False,
+            "error": f"Límite de la cuenta de Groq alcanzado: {exc}",
+        }), 429
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)}), 500
+
     _append_history("assistant", response)
     return jsonify({
         "success": True,
