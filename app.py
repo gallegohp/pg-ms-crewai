@@ -92,7 +92,20 @@ def chat():
         return response, 429
 
     _append_history("user", message)
-    response = process_message(message)
+    try:
+        response = process_message(message)
+    except Exception as e:
+        err_msg = str(e)
+        if "RATE_LIMIT_EXCEEDED" in err_msg:
+            return jsonify({
+                "success": False,
+                "error": err_msg
+            }), 429
+        return jsonify({
+            "success": False,
+            "error": err_msg
+        }), 500
+
     _append_history("assistant", response)
     return jsonify({
         "success": True,

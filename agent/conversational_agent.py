@@ -249,8 +249,11 @@ def process_message(user_input: str) -> str:
             response = str(agent.execute_task(task))
         _last_request_time = time.time()
     except Exception as exc:
-        response = f"Error al procesar la solicitud: {exc}"
         _last_request_time = time.time()
+        error_str = str(exc)
+        if "RateLimitError" in error_str or "rate_limit_exceeded" in error_str or "TPM" in error_str:
+            raise RuntimeError(f"RATE_LIMIT_EXCEEDED: {error_str}")
+        response = f"Error al procesar la solicitud: {exc}"
 
     return response
 
