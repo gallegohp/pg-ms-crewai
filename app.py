@@ -16,7 +16,7 @@ from agent.errors import RateLimitExceeded
 from agent.llm_client import KEY_ANALITICA, KEY_ORQUESTADOR
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+#CORS(app, resources={r"/*": {"origins": "*"}})
 
 HISTORY_PATH = Path(__file__).parent / "data" / "history" / "live_session.json"
 HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
